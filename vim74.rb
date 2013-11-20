@@ -115,3 +115,15 @@ diff --git a/src/Makefile b/src/Makefile
  
  objects/if_mzsch.o: if_mzsch.c $(MZSCHEME_EXTRA)
  	$(CCC) -o $@ $(MZSCHEME_CFLAGS_EXTRA) if_mzsch.c
+diff --git a/src/auto/configure b/src/auto/configure
+--- a/src/auto/configure
++++ b/src/auto/configure
+@@ -4743,7 +4743,7 @@
+ if test "${vi_cv_version_luajit+set}" = set; then :
+   $as_echo_n "(cached) " >&6
+ else
+-   vi_cv_version_luajit=`${vi_cv_path_luajit} -v 2>&1 | sed 's/LuaJIT \([0-9.]*\)\.[0-9]\(-[a-z0-9]\+\)\? .*/\1/'`
++   vi_cv_version_luajit=`${vi_cv_path_luajit} -v 2>&1 | sed 's/LuaJIT \([0-9.]*\)\.[0-9]\(-[a-z0-9]\{1,\}\)\{0,1\} .*/\1/'`
+ fi
+ { $as_echo "$as_me:${as_lineno-$LINENO}: result: $vi_cv_version_luajit" >&5
+ $as_echo "$vi_cv_version_luajit" >&6; }
