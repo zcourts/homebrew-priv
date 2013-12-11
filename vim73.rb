@@ -83,6 +83,7 @@ class Vim73 < Formula
                           "--enable-cscope",
                           "--with-features=huge",
                           "--with-compiledby=Homebrew",
+                          "--enable-fail-if-missing",
                           *opts
     system "make"
     # If stripping the binaries is not enabled, vim will segfault with
