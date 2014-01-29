@@ -28,7 +28,11 @@ class Vim74 < Formula
   end
 
   depends_on :python => :recommended
+  depends_on 'python3' => :optional
   depends_on 'gtk+' if build.with? 'client-server'
+
+  conflicts_with 'ex-vi',
+    :because => 'vim and ex-vi both install bin/ex and bin/view'
 
   # First patch: vim uses the obsolete Apple-only -no-cpp-precomp flag, which
   # FSF GCC can't understand; reported upstream:
@@ -41,6 +45,9 @@ class Vim74 < Formula
   def install
     ENV['LUA_PREFIX'] = HOMEBREW_PREFIX if build.with?('lua') || build.with?('luajit')
     ENV.append_to_cflags '-mtune=native'
+
+    # vim doesn't require any Python package, unset PYTHONPATH.
+    ENV.delete('PYTHONPATH')
 
     opts = []
     opts += LANGUAGES_OPTIONAL.map do |language|
@@ -56,18 +63,6 @@ class Vim74 < Formula
     end
 
     opts << "--disable-nls" if build.include? "disable-nls"
-
-    if python
-      if python.brewed?
-        # Avoid that vim always links System's Python even if configure tells us
-        # it has found a brewed Python. Verify with `otool -L`.
-        ENV.prepend 'LDFLAGS', "-F#{python.framework}"
-      elsif python.from_osx? && !MacOS::CLT.installed?
-        # Avoid `Python.h not found` on 10.8 with Xcode-only
-        ENV.append 'CFLAGS', "-I#{python.incdir}", ' '
-        # opts << "--with-python-config-dir=#{python.libdir}"
-      end
-    end
 
     if build.with? 'client-server'
       opts << '--enable-gui=gtk2'
