@@ -17,7 +17,7 @@ class Vim74 < Formula
   option "disable-nls", "Build vim without National Language Support (translated messages, keymaps)"
   option "with-client-server", "Enable client/server mode"
 
-  LANGUAGES_OPTIONAL = %w(lua luajit mzscheme perl python3 tcl)
+  LANGUAGES_OPTIONAL = %w(lua mzscheme perl python3 tcl)
   LANGUAGES_DEFAULT  = %w(ruby python)
 
   LANGUAGES_OPTIONAL.each do |language|
@@ -28,22 +28,18 @@ class Vim74 < Formula
   end
 
   depends_on :python => :recommended
-  depends_on 'python3' => :optional
+  depends_on :python3 => :optional
+  depends_on 'lua' => :optional
+  depends_on 'luajit' => :optional
   depends_on 'gtk+' if build.with? 'client-server'
 
   conflicts_with 'ex-vi',
     :because => 'vim and ex-vi both install bin/ex and bin/view'
 
-  # First patch: vim uses the obsolete Apple-only -no-cpp-precomp flag, which
-  # FSF GCC can't understand; reported upstream:
-  # https://groups.google.com/forum/#!topic/vim_dev/X5yG3-IiUp8
-  #
-  # Second patch: includes Mac OS X version macros not included by default on 10.9
-  # Reported upstream: https://groups.google.com/forum/#!topic/vim_mac/5kVAMSPb6uU
   def patches; DATA; end
 
   def install
-    ENV['LUA_PREFIX'] = HOMEBREW_PREFIX if build.with?('lua') || build.with?('luajit')
+    ENV['LUA_PREFIX'] = HOMEBREW_PREFIX if build.with?('lua')
     ENV.append_to_cflags '-mtune=native'
 
     # vim doesn't require any Python package, unset PYTHONPATH.
@@ -51,10 +47,10 @@ class Vim74 < Formula
 
     opts = []
     opts += LANGUAGES_OPTIONAL.map do |language|
-      "--enable-#{language}interp" if build.with?(language) && language != 'luajit'
+      "--enable-#{language}interp" if build.with? language
     end
     opts += LANGUAGES_DEFAULT.map do |language|
-      "--enable-#{language}interp" unless build.without? language
+      "--enable-#{language}interp" if build.with? language
     end
 
     if build.with? 'luajit'
@@ -89,12 +85,24 @@ class Vim74 < Formula
                           "--with-compiledby=Homebrew",
                           "--enable-fail-if-missing",
                           *opts
+
+    # Require Python's dynamic library, and needs to be built as a framework.
+    if build.with? "python" and build.with? "python3"
+      py_prefix = `python -c "import sys; print(sys.prefix)"`.chomp
+      py3_prefix = `python3 -c "import sys; print(sys.prefix)"`.chomp
+      # Help vim find Python's dynamic library as absolute path.
+      inreplace "src/auto/config.mk" do |s|
+        s.gsub! /-DDYNAMIC_PYTHON_DLL=\\".*\\"/, %(-DDYNAMIC_PYTHON_DLL=\'\"#{py_prefix}/Python\"\')
+        s.gsub! /-DDYNAMIC_PYTHON3_DLL=\\".*\\"/, %(-DDYNAMIC_PYTHON3_DLL=\'\"#{py3_prefix}/Python\"\')
+      end
+    end
+
     system "make"
     # If stripping the binaries is not enabled, vim will segfault with
     # statically-linked interpreters like ruby
     # http://code.google.com/p/vim/issues/detail?id=114&thanks=114&ts=1361483471
-    system "make", "install", "prefix=#{prefix}", "STRIP=/usr/bin/true"
-    ln_s bin+'vim', bin+'vi' if build.include? 'override-system-vi'
+    system "make", "install", "prefix=#{prefix}", "STRIP=true"
+    bin.install_symlink "vim" => "vi" if build.include? "override-system-vi"
   end
 end
 
