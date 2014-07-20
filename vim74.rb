@@ -39,7 +39,7 @@ class Vim74 < Formula
   def patches; DATA; end
 
   def install
-    ENV['LUA_PREFIX'] = HOMEBREW_PREFIX if build.with?('lua')
+    ENV['LUA_PREFIX'] = HOMEBREW_PREFIX if build.with?('lua') || build.with?('luajit')
     ENV.append_to_cflags '-mtune=native'
 
     # vim doesn't require any Python package, unset PYTHONPATH.
