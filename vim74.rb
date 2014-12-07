@@ -4,7 +4,7 @@ class Vim74 < Formula
   homepage 'http://www.vim.org/'
   # Get stable versions from hg repo instead of downloading an increasing
   # number of separate patches.
-  patchlevel = 539
+  patchlevel = 541
   url 'https://vim.googlecode.com/hg/', :tag => "v7-4-#{"%03d" % patchlevel}"
   version "7.4.#{patchlevel}"
 
@@ -119,3 +119,44 @@ diff --git a/src/Makefile b/src/Makefile
  
  objects/if_mzsch.o: if_mzsch.c $(MZSCHEME_EXTRA)
  	$(CCC) -o $@ $(MZSCHEME_CFLAGS_EXTRA) if_mzsch.c
+diff --git a/src/eval.c b/src/eval.c
+--- a/src/eval.c
++++ b/src/eval.c
+@@ -6929,7 +6929,9 @@ free_unref_items(copyID)
+     int copyID;
+ {
+     dict_T	*dd;
++    dict_T	*dd_next;
+     list_T	*ll;
++    list_T	*ll_next;
+     int		did_free = FALSE;
+ 
+     /*
+@@ -6941,11 +6943,10 @@ free_unref_items(copyID)
+ 	    /* Free the Dictionary and ordinary items it contains, but don't
+ 	     * recurse into Lists and Dictionaries, they will be in the list
+ 	     * of dicts or list of lists. */
++	    dd_next = dd->dv_used_next;
+ 	    dict_free(dd, FALSE);
+ 	    did_free = TRUE;
+-
+-	    /* restart, next dict may also have been freed */
+-	    dd = first_dict;
++	    dd = dd_next;
+ 	}
+ 	else
+ 	    dd = dd->dv_used_next;
+@@ -6962,11 +6963,10 @@ free_unref_items(copyID)
+ 	    /* Free the List and ordinary items it contains, but don't recurse
+ 	     * into Lists and Dictionaries, they will be in the list of dicts
+ 	     * or list of lists. */
++	    ll_next = ll->lv_used_next;
+ 	    list_free(ll, FALSE);
+ 	    did_free = TRUE;
+-
+-	    /* restart, next list may also have been freed */
+-	    ll = first_list;
++	    ll = ll_next;
+ 	}
+ 	else
+ 	    ll = ll->lv_used_next;
