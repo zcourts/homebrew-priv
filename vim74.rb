@@ -1,11 +1,9 @@
-require 'formula'
-
 class Vim74 < Formula
-  homepage 'http://www.vim.org/'
+  homepage "http://www.vim.org/"
   # Get stable versions from hg repo instead of downloading an increasing
   # number of separate patches.
   patchlevel = 580
-  url 'https://vim.googlecode.com/hg/', :tag => "v7-4-#{"%03d" % patchlevel}"
+  url "https://vim.googlecode.com/hg/", :tag => format("v7-4-%03d", patchlevel)
   version "7.4.#{patchlevel}"
 
   # We only have special support for finding depends_on :python, but not yet for
@@ -13,12 +11,11 @@ class Vim74 < Formula
   # PATH as the user has set it right now.
   env :std
 
-  option "override-system-vi", "Override system vi"
-  option "disable-nls", "Build vim without National Language Support (translated messages, keymaps)"
+  option "without-nls", "Build vim without National Language Support (translated messages, keymaps)"
   option "with-client-server", "Enable client/server mode"
 
-  LANGUAGES_OPTIONAL = %w(lua mzscheme perl python3 tcl)
-  LANGUAGES_DEFAULT  = %w(ruby python)
+  LANGUAGES_OPTIONAL = %w[lua mzscheme perl python3 tcl]
+  LANGUAGES_DEFAULT  = %w[ruby python]
 
   LANGUAGES_OPTIONAL.each do |language|
     option "with-#{language}", "Build vim with #{language} support"
@@ -29,21 +26,23 @@ class Vim74 < Formula
 
   depends_on :python => :recommended
   depends_on :python3 => :optional
-  depends_on 'lua' => :optional
-  depends_on 'luajit' => :optional
-  depends_on 'gtk+' if build.with? 'client-server'
+  depends_on "lua" => :optional
+  depends_on "luajit" => :optional
+  depends_on "gtk+" if build.with? "client-server"
 
-  conflicts_with 'ex-vi',
-    :because => 'vim and ex-vi both install bin/ex and bin/view'
+  conflicts_with "ex-vi",
+    :because => "vim and ex-vi both install bin/ex and bin/view"
 
-  def patches; DATA; end
+  def patches
+    DATA
+  end
 
   def install
-    ENV['LUA_PREFIX'] = HOMEBREW_PREFIX if build.with?('lua') || build.with?('luajit')
-    ENV.append_to_cflags '-mtune=native'
+    ENV["LUA_PREFIX"] = HOMEBREW_PREFIX if build.with?("lua") || build.with?("luajit")
+    ENV.append_to_cflags "-mtune=native"
 
     # vim doesn't require any Python package, unset PYTHONPATH.
-    ENV.delete('PYTHONPATH')
+    ENV.delete("PYTHONPATH")
 
     opts = []
     opts += LANGUAGES_OPTIONAL.map do |language|
@@ -53,15 +52,15 @@ class Vim74 < Formula
       "--enable-#{language}interp" if build.with? language
     end
 
-    if build.with? 'luajit'
-      opts << "--enable-luainterp" unless build.with? 'lua'
+    if build.with? "luajit"
+      opts << "--enable-luainterp" if build.without? "lua"
       opts << "--with-luajit"
     end
 
-    opts << "--disable-nls" if build.include? "disable-nls"
+    opts << "--disable-nls" if build.without? "nls"
 
-    if build.with? 'client-server'
-      opts << '--enable-gui=gtk2'
+    if build.with? "client-server"
+      opts << "--enable-gui=gtk2"
     else
       opts << "--enable-gui=no"
       opts << "--without-x"
@@ -87,7 +86,7 @@ class Vim74 < Formula
                           *opts
 
     # Require Python's dynamic library, and needs to be built as a framework.
-    if build.with? "python" and build.with? "python3"
+    if build.with?("python") && build.with?("python3")
       py_prefix = `python -c "import sys; print(sys.prefix)"`.chomp
       py3_prefix = `python3 -c "import sys; print(sys.prefix)"`.chomp
       # Help vim find Python's dynamic library as absolute path.
@@ -102,7 +101,10 @@ class Vim74 < Formula
     # statically-linked interpreters like ruby
     # http://code.google.com/p/vim/issues/detail?id=114&thanks=114&ts=1361483471
     system "make", "install", "prefix=#{prefix}", "STRIP=true"
-    bin.install_symlink "vim" => "vi" if build.include? "override-system-vi"
+  end
+
+  test do
+    #
   end
 end
 
