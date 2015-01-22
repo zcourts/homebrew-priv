@@ -1,11 +1,9 @@
-require 'formula'
-
 class Vim73 < Formula
-  homepage 'http://www.vim.org/'
+  homepage "http://www.vim.org/"
   # Get stable versions from hg repo instead of downloading an increasing
   # number of separate patches.
   patchlevel = 1314
-  url 'https://vim.googlecode.com/hg/', :tag => "v7-3-#{"%03d" % patchlevel}"
+  url "https://vim.googlecode.com/hg/", :tag => format("v7-3-%03d", patchlevel)
   version "7.3.#{patchlevel}"
 
   # We only have special support for finding depends_on :python, but not yet for
@@ -13,12 +11,11 @@ class Vim73 < Formula
   # PATH as the user has set it right now.
   env :std
 
-  option "override-system-vi", "Override system vi"
-  option "disable-nls", "Build vim without National Language Support (translated messages, keymaps)"
+  option "without-nls", "Build vim without National Language Support (translated messages, keymaps)"
   option "with-client-server", "Enable client/server mode"
 
-  LANGUAGES_OPTIONAL = %w(lua luajit mzscheme perl python3 tcl)
-  LANGUAGES_DEFAULT  = %w(ruby python)
+  LANGUAGES_OPTIONAL = %w[lua luajit mzscheme perl python3 tcl]
+  LANGUAGES_DEFAULT  = %w[ruby python]
 
   LANGUAGES_OPTIONAL.each do |language|
     option "with-#{language}", "Build vim with #{language} support"
@@ -28,39 +25,39 @@ class Vim73 < Formula
   end
 
   depends_on :python => :recommended
-  depends_on 'gtk+' if build.with? 'client-server'
+  depends_on "gtk+" if build.with? "client-server"
 
   def patches
-    DATA if build.include? "with-luajit"
+    DATA if build.with? "luajit"
   end
 
   def install
-    ENV['LUA_PREFIX'] = HOMEBREW_PREFIX if build.with?('lua') || build.with?('luajit')
-    ENV.append_to_cflags '-mtune=native'
+    ENV["LUA_PREFIX"] = HOMEBREW_PREFIX if build.with?("lua") || build.with?("luajit")
+    ENV.append_to_cflags "-mtune=native"
 
     opts = []
     opts += LANGUAGES_OPTIONAL.map do |language|
-      "--enable-#{language}interp" if build.with?(language) && language != 'luajit'
+      "--enable-#{language}interp" if build.with?(language) && language != "luajit"
     end
     opts += LANGUAGES_DEFAULT.map do |language|
-      "--enable-#{language}interp" unless build.without? language
+      "--enable-#{language}interp" if build.with? language
     end
 
-    if build.with? 'luajit'
-      opts << "--enable-luainterp" unless build.with? 'lua'
+    if build.with? "luajit"
+      opts << "--enable-luainterp" if build.without? "lua"
       opts << "--with-luajit"
     end
 
-    opts << "--disable-nls" if build.include? "disable-nls"
+    opts << "--disable-nls" if build.without? "nls"
 
     if python
       if python.brewed?
         # Avoid that vim always links System's Python even if configure tells us
         # it has found a brewed Python. Verify with `otool -L`.
-        ENV.prepend 'LDFLAGS', "-F#{python.framework}"
+        ENV.prepend "LDFLAGS", "-F#{python.framework}"
       elsif python.from_osx? && !MacOS::CLT.installed?
         # Avoid `Python.h not found` on 10.8 with Xcode-only
-        ENV.append 'CFLAGS', "-I#{python.incdir}", ' '
+        ENV.append "CFLAGS", "-I#{python.incdir}", " "
         # opts << "--with-python-config-dir=#{python.libdir}"
       end
     end
@@ -90,7 +87,10 @@ class Vim73 < Formula
     # statically-linked interpreters like ruby
     # http://code.google.com/p/vim/issues/detail?id=114&thanks=114&ts=1361483471
     system "make", "install", "prefix=#{prefix}", "STRIP=/usr/bin/true"
-    ln_s bin+'vim', bin+'vi' if build.include? 'override-system-vi'
+  end
+
+  test do
+    #
   end
 end
 
