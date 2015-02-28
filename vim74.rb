@@ -33,10 +33,6 @@ class Vim74 < Formula
   conflicts_with "ex-vi",
     :because => "vim and ex-vi both install bin/ex and bin/view"
 
-  def patches
-    DATA
-  end
-
   def install
     ENV["LUA_PREFIX"] = HOMEBREW_PREFIX if build.with?("lua") || build.with?("luajit")
     ENV.append_to_cflags "-mtune=native"
@@ -107,17 +103,3 @@ class Vim74 < Formula
     #
   end
 end
-
-__END__
-diff --git a/src/Makefile b/src/Makefile
---- a/src/Makefile
-+++ b/src/Makefile
-@@ -2552,7 +2552,7 @@
- 	$(CCC) -o $@ if_xcmdsrv.c
- 
- objects/if_lua.o: if_lua.c
--	$(CCC) $(LUA_CFLAGS) -o $@ if_lua.c
-+	$(CC) -c -I$(srcdir) $(LUA_CFLAGS) $(ALL_CFLAGS) -o $@ if_lua.c
- 
- objects/if_mzsch.o: if_mzsch.c $(MZSCHEME_EXTRA)
- 	$(CCC) -o $@ $(MZSCHEME_CFLAGS_EXTRA) if_mzsch.c
