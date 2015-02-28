@@ -27,10 +27,6 @@ class Vim73 < Formula
   depends_on :python => :recommended
   depends_on "gtk+" if build.with? "client-server"
 
-  def patches
-    DATA if build.with? "luajit"
-  end
-
   def install
     ENV["LUA_PREFIX"] = HOMEBREW_PREFIX if build.with?("lua") || build.with?("luajit")
     ENV.append_to_cflags "-mtune=native"
@@ -93,16 +89,3 @@ class Vim73 < Formula
     #
   end
 end
-
-__END__
---- a/src/Makefile
-+++ b/src/Makefile
-@@ -2552,7 +2552,7 @@
- 	$(CCC) -o $@ if_xcmdsrv.c
- 
- objects/if_lua.o: if_lua.c
--	$(CCC) $(LUA_CFLAGS) -o $@ if_lua.c
-+	$(CC) -c -I$(srcdir) $(LUA_CFLAGS) $(ALL_CFLAGS) -o $@ if_lua.c
- 
- objects/if_mzsch.o: if_mzsch.c $(MZSCHEME_EXTRA)
- 	$(CCC) -o $@ $(MZSCHEME_CFLAGS_EXTRA) if_mzsch.c
